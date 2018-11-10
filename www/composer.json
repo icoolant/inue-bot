@@ -1,5 +1,8 @@
 {
     "require": {
+        "php": ">=5.4.0",
+        "ext-pdo": "*",
+        "ext-json": "*",
         "vkcom/vk-php-sdk": "^5.80"
     },
     "autoload": {
