@@ -6,6 +6,8 @@ class Storage
 {
     protected $pdo;
 
+    protected $errors = [];
+
     public function __construct()
     {
         $this->pdo = new \PDO(DB_DSN, DB_USER, DB_PASSWORD, DB_OPTIONS);
@@ -27,20 +29,35 @@ class Storage
         return $obj;
     }
 
-    public function setUserData(Registration $reg)
+    public function setUserData(Registration $reg): bool
     {
+        $pdo = $this->pdo;
         if ($reg->validate()) {
-            $stmt = $this->pdo->prepare('update registration set (?)');
-            $stmt->execute([
-                implode(',', array_map(function ($attribute) use ($reg) {
-                    if ($reg->{$attribute} === null) {
-                        $val = 'null';
-                    } else {
-                        $val = '"'.$reg->{$attribute}.'"';
-                    }
-                    return '`'.$attribute.'` = '.$val;
-                }, $reg->attributes())),
-            ]);
+            $params = implode(',', array_map(function ($attribute) use ($reg, $pdo) {
+                $attrVal = $reg->{$attribute};
+                if (is_null($attrVal)) {
+                    $val = $pdo->quote($attrVal, \PDO::PARAM_NULL);
+                } elseif(is_bool($attrVal)) {
+                    $val = (int)$attrVal;
+                } elseif (is_numeric($attrVal)) {
+                    $val = $attrVal;
+                } else  {
+                    $val = $pdo->quote($attrVal);
+                }
+                return '`'.$attribute.'` = '.$val;
+            }, $reg->attributes()));
+            $stmt = $pdo->prepare("update registration set $params where peer_id = ?");
+            $res = $stmt->execute([$reg->peer_id]);
+            if (!$res) {
+                $this->errors[] = print_r($stmt->errorInfo(), true).$stmt->queryString;
+            }
+            return count($this->errors) === 0;
         }
+        return false;
+    }
+
+    public function getErrors()
+    {
+        return $this->errors;
     }
 }

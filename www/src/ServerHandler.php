@@ -38,7 +38,7 @@ class ServerHandler extends VKCallbackApiServerHandler
     public function parse($event): void
     {
         $object = (array)$event->object;
-        $this->peerId = $object['peer_id'] ?? null;
+        $this->peerId = $object['peer_id'] ?? $object['user_id'] ?? null;
         if ($this->peerId) {
             $this->registration = $this->storage->getUserData($this->peerId);
         }
@@ -50,9 +50,9 @@ class ServerHandler extends VKCallbackApiServerHandler
      */
     public function messageNew(int $group_id, ?string $secret, array $object)
     {
-//        $this->logger->debug(print_r(['gr' => $group_id, 'ob' => $object, 'sec' => $secret], true));
+//        $this->logger->debug(print_r($object, true));
         $actionName = null;
-        $messageBody = $object['body'] ?? '';
+        $messageBody = $object['text'] ?? null;
         if (isset($object['payload'])) {
             $payload = json_decode($object['payload'], true);
             $actionName = $payload['action'] ?? null;
@@ -62,7 +62,7 @@ class ServerHandler extends VKCallbackApiServerHandler
                 $action = new ActionInfo($this->api, $this->peerId);
                 break;
             case BaseAction::REGISTER:
-                $action = new ActionRegister($this->api, $this->peerId, $this->registration);
+                $action = new ActionRegister($this->api, $this->peerId, $this->registration, $this->storage);
                 break;
             case BaseAction::ROAD_MAP:
                 $action = new ActionRoadMap($this->api, $this->peerId);

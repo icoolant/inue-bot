@@ -51,20 +51,20 @@ class Registration
                     $this->errors[] = 'город задан не верно';
                 }
             case 3:
-                if (!$this->age || !is_integer($this->age) || $this->age < 1 || $this->age > 90) {
+                if (!$this->age || !is_numeric($this->age) || $this->age < 1 || $this->age > 90) {
                     $this->errors[] = 'не верный возраст';
                 }
             case 2:
                 if (!$this->full_name || strlen($this->full_name) < 5)  {
-                    $this->errors[] = 'ФИО задано не верно';
+                    $this->errors[] = 'ФИО задано не верно ';
                 }
             case 1:
             default:
-                if (!$this->peer_id || !is_integer($this->peer_id)) {
+                if (!$this->peer_id || !is_numeric($this->peer_id)) {
                     $this->errors[] = 'пользователь не найден';
                 }
         }
-        return count($this->errors) > 0;
+        return count($this->errors) === 0;
     }
 
     public function getErrors(): array

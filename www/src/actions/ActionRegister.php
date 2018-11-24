@@ -30,7 +30,7 @@ class ActionRegister extends BaseAction
                 $stepMessage = 'Введите ваш возраст';
                 break;
             case 2:
-                $reg->age = $messageBody;
+                $reg->age = (int)$messageBody;
                 $reg->step = 3;
                 $stepMessage = 'Из какого вы города?';
                 break;
@@ -40,16 +40,17 @@ class ActionRegister extends BaseAction
                 $stepMessage = 'Из какой церкви?';
                 break;
             case 4:
-                $reg->city = $messageBody;
+                $reg->church = $messageBody;
                 $reg->step = 5;
                 $stepMessage = 'Требуется вам расселение?';
                 break;
             case 5:
-                $reg->resettlement = $messageBody;
+                $reg->resettlement = $this->parseBool($messageBody);
                 $reg->step = 6;
                 $stepMessage = 'Теперь вы можете оплатить регистрацию!';
                 break;
             default:
+                $reg->step = 1;
                 $stepMessage = 'Для регистрации введите ФИО';
         }
         if ($db->setUserData($reg) && $stepMessage) {
@@ -58,6 +59,22 @@ class ActionRegister extends BaseAction
         if ($errors = $reg->getErrors()) {
             $this->sendResponse('Ошибка, '.implode(' и ', $errors).'.');
         }
+        if ($errors = $db->getErrors()) {
+            $this->sendResponse('Ошибка, '.implode(' и ', $errors).'.');
+        }
+
+//        $this->sendResponse(print_r($reg, true));
+    }
+
+    protected function parseBool(string $value): ?bool
+    {
+        if (preg_match('/да|da|yes/iu', ($value)) === 1) {
+            return true;
+        }
+        if (preg_match('/нет|net|no/iu', ($value)) === 1) {
+            return false;
+        }
+        return null;
     }
 
 }
