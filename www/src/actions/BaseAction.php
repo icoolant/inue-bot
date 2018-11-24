@@ -20,7 +20,7 @@ abstract class BaseAction
         $this->userId = $userId;
     }
 
-    abstract public function execute(): void;
+    abstract public function execute($messageBody): void;
 
     final protected function sendResponse(string $message, Keyboard $keyboard = null): void
     {

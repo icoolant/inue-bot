@@ -14,6 +14,9 @@ class ServerHandler extends VKCallbackApiServerHandler
     protected $api;
     protected $logger;
     protected $storage;
+    /** @var Registration */
+    protected $registration;
+    protected $peerId;
 
     public function __construct(VKApiClient $api, Logger $logger, Storage $storage)
     {
@@ -22,7 +25,8 @@ class ServerHandler extends VKCallbackApiServerHandler
         $this->storage = $storage;
     }
 
-    function confirmation(int $group_id, ?string $secret) {
+    function confirmation(int $group_id, ?string $secret)
+    {
         if ($secret === SECRET && $group_id === GROUP_ID) {
             echo CONFIRMATION_TOKEN;
         }
@@ -31,27 +35,45 @@ class ServerHandler extends VKCallbackApiServerHandler
     /**
      * @inheritdoc
      */
-    public function messageNew(int $group_id, ?string $secret, array $object) {
+    public function parse($event): void
+    {
+        $object = (array)$event->object;
+        $this->peerId = $object['peer_id'] ?? null;
+        if ($this->peerId) {
+            $this->registration = $this->storage->getUserData($this->peerId);
+        }
+        parent::parse($event);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function messageNew(int $group_id, ?string $secret, array $object)
+    {
 //        $this->logger->debug(print_r(['gr' => $group_id, 'ob' => $object, 'sec' => $secret], true));
-        $userId = $object['peer_id'] ?? null;
         $actionName = null;
+        $messageBody = $object['body'] ?? '';
         if (isset($object['payload'])) {
             $payload = json_decode($object['payload'], true);
             $actionName = $payload['action'] ?? null;
         }
         switch ($actionName) {
             case BaseAction::INFO:
-                $action = new ActionInfo($this->api, $userId);
+                $action = new ActionInfo($this->api, $this->peerId);
                 break;
             case BaseAction::REGISTER:
-                $action = new ActionRegister($this->api, $userId);
+                $action = new ActionRegister($this->api, $this->peerId, $this->registration);
                 break;
             case BaseAction::ROAD_MAP:
-                $action = new ActionRoadMap($this->api, $userId);
+                $action = new ActionRoadMap($this->api, $this->peerId);
                 break;
             default:
-                $action = new ActionDefault($this->api, $userId);
+                if ($this->registration->step) {
+                    $action = new ActionRegister($this->api, $this->peerId, $this->registration, $this->storage);
+                } else {
+                    $action = new ActionDefault($this->api, $this->peerId);
+                }
         }
-        $action->execute();
+        $action->execute($messageBody);
     }
 }

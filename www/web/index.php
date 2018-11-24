@@ -9,9 +9,9 @@ $logger = new \app\Logger();
 $storage = new \app\Storage();
 $handler = new \app\ServerHandler($api, $logger, $storage);
 
-$data = json_decode(file_get_contents('php://input'));
-if ($data) {
-    $handler->parse($data);
+$eventData = json_decode(file_get_contents('php://input'));
+if ($eventData) {
+    $handler->parse($eventData);
     echo 'OK';
 } else {
     echo 'Nothing to do.';

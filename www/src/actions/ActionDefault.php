@@ -6,7 +6,7 @@ use app\Keyboard;
 
 class ActionDefault extends BaseAction
 {
-    public function execute(): void
+    public function execute($messageBody): void
     {
         $kb = (new Keyboard())
             ->addButton(new Button('Информация о конференции', Button::COLOR_PRIMARY, ['action' => self::INFO]))
