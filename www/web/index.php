@@ -14,5 +14,11 @@ if ($eventData) {
     $handler->parse($eventData);
     echo 'OK';
 } else {
-    echo 'Nothing to do.';
+    $logger->debug(print_r($_POST, true));
+    if (isset($_POST['sig'])) {
+        $paymentHandler = new \app\PaymentHandler($logger);
+        $paymentHandler->parse($_POST);
+    } else {
+        include '../src/view/payment.php';
+    }
 }
