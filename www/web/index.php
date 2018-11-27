@@ -16,7 +16,7 @@ if ($eventData) {
 } else {
     $logger->debug(print_r($_POST, true));
     if (isset($_POST['sig'])) {
-        $paymentHandler = new \app\PaymentHandler($logger);
+        $paymentHandler = new \app\PaymentHandler($api, $logger, $storage);
         $paymentHandler->parse($_POST);
     } else {
         include '../src/view/payment.php';

@@ -47,7 +47,15 @@ class ActionRegister extends BaseAction
             case 5:
                 $reg->resettlement = $this->parseBool($messageBody);
                 $reg->step = 6;
-                $stepMessage = 'Теперь вы можете оплатить регистрацию!';
+                $stepMessage = 'Теперь вы можете оплатить регистрацию! https://vk.com/app6761763';
+                break;
+            case 6:
+                $reg->step = 7;
+                $reg->paid = 1;
+                $stepMessage = 'Спасибо, вы зарегистрированы!';
+                break;
+            case 7:
+                $stepMessage = 'Вы уже зарегистрировались';
                 break;
             default:
                 $reg->step = 1;

@@ -9,15 +9,21 @@
 namespace app;
 
 
+use app\actions\ActionRegister;
+use VK\Client\VKApiClient;
+
 class PaymentHandler
 {
-
-    protected $response = [];
+    protected $api;
     protected $logger;
+    protected $storage;
+    protected $response = [];
 
-    public function __construct(Logger $logger)
+    public function __construct(VKApiClient $api, Logger $logger, Storage $storage)
     {
+        $this->api = $api;
         $this->logger = $logger;
+        $this->storage = $storage;
     }
 
     public function parse($input)
@@ -112,10 +118,13 @@ class PaymentHandler
                 if ($input['status'] == 'chargeable') {
                     $order_id = intval($input['order_id']);
                     $app_order_id = 1; // Тут фактического заказа может не быть - тестовый режим.
+                    $peerId = $input['user_id'];
                     $this->response['response'] = array(
                         'order_id' => $order_id,
                         'app_order_id' => $app_order_id,
                     );
+                    $action = new ActionRegister($this->api, $peerId, $this->storage->getUserData($peerId), $this->storage);
+                    $action->execute(null);
                 } else {
                     $this->response['error'] = array(
                         'error_code' => 100,

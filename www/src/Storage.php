@@ -36,7 +36,7 @@ class Storage
             $params = implode(',', array_map(function ($attribute) use ($reg, $pdo) {
                 $attrVal = $reg->{$attribute};
                 if (is_null($attrVal)) {
-                    $val = $pdo->quote($attrVal, \PDO::PARAM_NULL);
+                    $val = 'null';
                 } elseif(is_bool($attrVal)) {
                     $val = (int)$attrVal;
                 } elseif (is_numeric($attrVal)) {
