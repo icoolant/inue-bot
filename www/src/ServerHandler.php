@@ -29,6 +29,8 @@ class ServerHandler extends VKCallbackApiServerHandler
     {
         if ($secret === SECRET && $group_id === GROUP_ID) {
             echo CONFIRMATION_TOKEN;
+        } else {
+            echo 'Error';
         }
     }
 
@@ -37,8 +39,8 @@ class ServerHandler extends VKCallbackApiServerHandler
      */
     public function parse($event): void
     {
-        $object = (array)$event->object;
-        $this->peerId = $object['peer_id'] ?? $object['user_id'] ?? null;
+        $object = $event->object ?? [];
+        $this->peerId = $object->peer_id ?? $object->user_id ?? null;
         if ($this->peerId) {
             $this->registration = $this->storage->getUserData($this->peerId);
         }
@@ -62,14 +64,14 @@ class ServerHandler extends VKCallbackApiServerHandler
                 $action = new ActionInfo($this->api, $this->peerId);
                 break;
             case BaseAction::REGISTER:
-                $action = new ActionRegister($this->api, $this->peerId, $this->registration, $this->storage);
+                $action = new ActionRegister($this->api, $this->peerId, $this->registration, $this->storage, $object);
                 break;
             case BaseAction::ROAD_MAP:
                 $action = new ActionRoadMap($this->api, $this->peerId);
                 break;
             default:
-                if ($this->registration->step) {
-                    $action = new ActionRegister($this->api, $this->peerId, $this->registration, $this->storage);
+                if ($this->registration->step < 7) {
+                    $action = new ActionRegister($this->api, $this->peerId, $this->registration, $this->storage, $object);
                 } else {
                     $action = new ActionDefault($this->api, $this->peerId);
                 }

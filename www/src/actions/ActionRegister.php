@@ -10,12 +10,14 @@ class ActionRegister extends BaseAction
 {
     protected $registration;
     protected $storage;
+    protected $object;
 
-    public function __construct(VKApiClient $api, string $userId, Registration $registration, Storage $storage)
+    public function __construct(VKApiClient $api, string $userId, Registration $registration, Storage $storage, array $object)
     {
         parent::__construct($api, $userId);
         $this->registration = $registration;
         $this->storage = $storage;
+        $this->object = $object;
     }
 
     public function execute($messageBody): void
@@ -47,12 +49,16 @@ class ActionRegister extends BaseAction
             case 5:
                 $reg->resettlement = $this->parseBool($messageBody);
                 $reg->step = 6;
-                $stepMessage = 'Теперь вы можете оплатить регистрацию! https://vk.com/app6761763';
+                $stepMessage = 'Теперь вы можете оплатить регистрацию, прикрепив платеж к сообщению';
                 break;
             case 6:
-                $reg->step = 7;
-                $reg->paid = 1;
-                $stepMessage = 'Спасибо, вы зарегистрированы!';
+                if ($this->isPayment($this->object)) {
+                    $reg->step = 7;
+                    $reg->paid = 1;
+                    $stepMessage = 'Спасибо, вы зарегистрированы! В течении дня адмисистратор проверит ваш платеж.';
+                } else {
+                    $stepMessage = 'Пожалуйста, прикрепите платеж к сообщению';
+                }
                 break;
             case 7:
                 $stepMessage = 'Вы уже зарегистрировались';
@@ -85,4 +91,21 @@ class ActionRegister extends BaseAction
         return null;
     }
 
+    protected function isPayment($object)
+    {
+        $attachment = $object['attachments'][0] ?? false;
+        if ($attachment['type'] == 'link' ) {
+            $link = $attachment['link'];
+            if ($link['url'] == 'https://m.vk.com/landings/moneysend' &&
+                $link['caption'] == 'Денежный перевод')
+            {
+                $amount = substr($link['title'], 0, 3);
+                if ($amount > 100) {
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
 }
