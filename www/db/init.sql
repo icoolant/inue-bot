@@ -12,10 +12,6 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
 
--- Дамп структуры базы данных inue
-CREATE DATABASE IF NOT EXISTS `inue` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `inue`;
-
 -- Дамп структуры для таблица inue.registration
 CREATE TABLE IF NOT EXISTS `registration` (
   `peer_id` int(10) unsigned NOT NULL,
