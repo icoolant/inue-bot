@@ -3,6 +3,7 @@ namespace app;
 
 use app\actions\ActionDefault;
 use app\actions\ActionInfo;
+use app\actions\ActionMessage;
 use app\actions\ActionRegister;
 use app\actions\ActionRoadMap;
 use app\actions\BaseAction;
@@ -59,6 +60,7 @@ class ServerHandler extends VKCallbackApiServerHandler
             $payload = json_decode($object['payload'], true);
             $actionName = $payload['action'] ?? null;
         }
+        $action = null;
         switch ($actionName) {
             case BaseAction::INFO:
                 $action = new ActionInfo($this->api, $this->peerId);
@@ -76,6 +78,24 @@ class ServerHandler extends VKCallbackApiServerHandler
                     $action = new ActionDefault($this->api, $this->peerId);
                 }
         }
-        $action->execute($messageBody);
+        if ($action) {
+            $action->execute($messageBody);
+        }
+    }
+
+    public function messageReply(int $group_id, ?string $secret, array $object)
+    {
+        $messageBody = $object['text'] ?? null;
+        $reg = $this->registration;
+        if ((preg_match('/платеж принят|платёж принят/iu', ($messageBody)) === 1)) {
+            if ($reg->isPaidEnough()) {
+                $reg->paid = 1;
+                $this->storage->setUserData($reg);
+            } else {
+                $error =  Helper::botMessage('admin-error.failed-accept-payment', [$reg->peer_id, (float)$reg->paid_in_currency, (float)REG_PRICE]);
+                $this->logger->debug($error);
+                (new ActionMessage($this->api, $object['from_id']))->execute($error);
+            }
+        }
     }
 }

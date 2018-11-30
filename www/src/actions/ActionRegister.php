@@ -2,6 +2,8 @@
 namespace app\actions;
 
 
+use app\Helper;
+use app\Logger;
 use app\Registration;
 use app\Storage;
 use VK\Client\VKApiClient;
@@ -24,48 +26,54 @@ class ActionRegister extends BaseAction
     {
         $reg = $this->registration;
         $db = $this->storage;
+        if ($messageBody == 'Регистрация' && $reg->step > 0) {
+            $this->sendResponse(Helper::botMessage('registration.already-started'));
+            return;
+        }
         $stepMessage = null;
         switch ($reg->step) {
             case 1:
                 $reg->full_name = $messageBody;
                 $reg->step = 2;
-                $stepMessage = 'Введите ваш возраст';
+                $stepMessage = Helper::botMessage('registration.age');
                 break;
             case 2:
                 $reg->age = (int)$messageBody;
                 $reg->step = 3;
-                $stepMessage = 'Из какого вы города?';
+                $stepMessage = Helper::botMessage('registration.city');
                 break;
             case 3:
                 $reg->city = $messageBody;
                 $reg->step = 4;
-                $stepMessage = 'Из какой церкви?';
+                $stepMessage = Helper::botMessage('registration.church');
                 break;
             case 4:
                 $reg->church = $messageBody;
                 $reg->step = 5;
-                $stepMessage = 'Требуется вам расселение?';
+                $stepMessage = Helper::botMessage('registration.resettlement');
                 break;
             case 5:
                 $reg->resettlement = $this->parseBool($messageBody);
                 $reg->step = 6;
-                $stepMessage = 'Теперь вы можете оплатить регистрацию, прикрепив платеж к сообщению';
+                $stepMessage = Helper::botMessage('registration.pay-instructions');
                 break;
             case 6:
-                if ($this->isPayment($this->object)) {
+                if ($payment = $this->getPayment($this->object)) {
+                    $reg->paid_in_currency += $payment;
                     $reg->step = 7;
-                    $reg->paid = 1;
-                    $stepMessage = 'Спасибо, вы зарегистрированы! В течении дня адмисистратор проверит ваш платеж.';
+                    if ($reg->isPaidEnough())  {
+                        $stepMessage = Helper::botMessage('registration.success');
+                    }
                 } else {
-                    $stepMessage = 'Пожалуйста, прикрепите платеж к сообщению';
+                    $stepMessage = Helper::botMessage('registration.wrong-message');
                 }
                 break;
             case 7:
-                $stepMessage = 'Вы уже зарегистрировались';
+                $stepMessage = Helper::botMessage('registration.already-registered');
                 break;
             default:
                 $reg->step = 1;
-                $stepMessage = 'Для регистрации введите ФИО';
+                $stepMessage = Helper::botMessage('registration.full-name');
         }
         if ($db->setUserData($reg) && $stepMessage) {
             $this->sendResponse($stepMessage);
@@ -76,8 +84,6 @@ class ActionRegister extends BaseAction
         if ($errors = $db->getErrors()) {
             $this->sendResponse('Ошибка, '.implode(' и ', $errors).'.');
         }
-
-//        $this->sendResponse(print_r($reg, true));
     }
 
     protected function parseBool(string $value): ?bool
@@ -91,21 +97,19 @@ class ActionRegister extends BaseAction
         return null;
     }
 
-    protected function isPayment($object)
+    protected function getPayment($object): ?float
     {
         $attachment = $object['attachments'][0] ?? false;
-        if ($attachment['type'] == 'link' ) {
-            $link = $attachment['link'];
-            if ($link['url'] == 'https://m.vk.com/landings/moneysend' &&
-                $link['caption'] == 'Денежный перевод')
+        //(new Logger())->debug(print_r($attachment, true));
+        if ($attachment && $attachment->type == 'link' ) {
+            $link = $attachment->link;
+            if ($link->url == 'https://m.vk.com/landings/moneysend' &&
+                $link->caption == 'Денежный перевод')
             {
-                $amount = substr($link['title'], 0, 3);
-                if ($amount > 100) {
-                    return true;
-                }
+                return (float)explode(' ', $link->title)[0];
             }
 
         }
-        return false;
+        return null;
     }
 }

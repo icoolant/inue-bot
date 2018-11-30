@@ -10,6 +10,7 @@ abstract class BaseAction
     const INFO = 'info';
     const REGISTER = 'register';
     const ROAD_MAP = 'read-map';
+    const ADMIN_ACCEPT = 'accept';
 
     protected $api;
     protected $userId;

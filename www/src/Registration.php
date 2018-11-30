@@ -27,41 +27,47 @@ class Registration
     public $paid;
     /** @var integer */
     public $step;
+    /** @var float */
+    public $paid_in_currency;
 
     protected $errors = [];
 
     public function attributes(): array
     {
-        return ['peer_id', 'full_name', 'age', 'city', 'church', 'resettlement', 'paid', 'step'];
+        return ['peer_id', 'full_name', 'age', 'city', 'church', 'resettlement', 'paid', 'step', 'paid_in_currency'];
     }
 
     public function validate(): bool
     {
         switch ($this->step) {
+            case 7:
+                if (!$this->isPaidEnough())  {
+                    $this->errors[] = Helper::botMessage('error.paid-not-enough', [bcsub(REG_PRICE, $this->paid_in_currency, 2)]);
+                }
             case 6:
-                if ($this->resettlement === null || !is_bool($this->resettlement))  {
-                    $this->errors[] = 'расселение задано не верно';
+                if ($this->resettlement === null || (!is_bool($this->resettlement) && $this->resettlement > 1))  {
+                    $this->errors[] = Helper::botMessage('error.resettlement');
                 }
             case 5:
                 if (!$this->church || strlen($this->church) < 2)  {
-                    $this->errors[] = 'церковь задана не верно';
+                    $this->errors[] = Helper::botMessage('error.church');
                 }
             case 4:
                 if (!$this->city || strlen($this->city) < 2)  {
-                    $this->errors[] = 'город задан не верно';
+                    $this->errors[] = Helper::botMessage('error.city');
                 }
             case 3:
                 if (!$this->age || !is_numeric($this->age) || $this->age < 1 || $this->age > 90) {
-                    $this->errors[] = 'не верный возраст';
+                    $this->errors[] = Helper::botMessage('error.age');
                 }
             case 2:
                 if (!$this->full_name || strlen($this->full_name) < 5)  {
-                    $this->errors[] = 'ФИО задано не верно ';
+                    $this->errors[] = Helper::botMessage('error.full-name');
                 }
             case 1:
             default:
                 if (!$this->peer_id || !is_numeric($this->peer_id)) {
-                    $this->errors[] = 'пользователь не найден';
+                    $this->errors[] = Helper::botMessage('error.user-not-found');
                 }
         }
         return count($this->errors) === 0;
@@ -70,6 +76,11 @@ class Registration
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    public function isPaidEnough()
+    {
+        return bccomp($this->paid_in_currency, REG_PRICE, 2) >= 0;
     }
 
 }
