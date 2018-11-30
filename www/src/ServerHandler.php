@@ -91,6 +91,12 @@ class ServerHandler extends VKCallbackApiServerHandler
             if ($reg->isPaidEnough()) {
                 $reg->paid = 1;
                 $this->storage->setUserData($reg);
+                if ($reg->getErrors()) {
+                    $this->logger->debug(print_r($reg->getErrors(), true));
+                }
+                if ($this->storage->getErrors()) {
+                    $this->logger->debug(print_r($this->storage->getErrors(), true));
+                }
             } else {
                 $error =  Helper::botMessage('admin-error.failed-accept-payment', [$reg->peer_id, (float)$reg->paid_in_currency, (float)REG_PRICE]);
                 $this->logger->debug($error);
