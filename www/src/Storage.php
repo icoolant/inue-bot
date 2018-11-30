@@ -56,6 +56,14 @@ class Storage
         return false;
     }
 
+    /**
+     * @return bool|\PDOStatement
+     */
+    public function getAll()
+    {
+        return $this->pdo->query('select * from registration');
+    }
+
     public function getErrors()
     {
         return $this->errors;

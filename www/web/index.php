@@ -11,7 +11,7 @@ $handler = new \app\ServerHandler($api, $logger, $storage);
 
 $eventData = json_decode(file_get_contents('php://input'));
 if ($eventData) {
-    //$logger->debug(print_r($eventData, true));
+    $logger->debug(print_r($eventData, true));
     $handler->parse($eventData);
     if ($eventData->type != 'confirmation') {
         echo 'OK';
@@ -24,5 +24,9 @@ if ($eventData) {
 //    } else {
 //        include '../src/view/payment.php';
 //    }
-    echo 'Unknown action';
+    if (isset($_GET['action']) && $_GET['action'] == 'registered') {
+        include '../src/view/registered.php';
+    } else {
+        echo 'Unknown action';
+    }
 }
