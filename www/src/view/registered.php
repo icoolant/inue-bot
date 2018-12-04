@@ -19,6 +19,7 @@ $stmt = $storage->getAll();
         <td>Оплачено</td>
         <td>Платеж подтвержден</td>
         <td>Шаг регистрации</td>
+        <td>last_modified</td>
     </thead>
     <tbody>
     <?php if ($stmt) { ?>
@@ -34,6 +35,7 @@ $stmt = $storage->getAll();
                 <td><?=$row->paid_in_currency?></td>
                 <td><?=$row->paid === null ? 'n/a' : (int)$row->paid?></td>
                 <td><?=$row->step?></td>
+                <td><?=$row->updated_at?></td>
             </tr>
         <?php } ?>
     <?php }?>

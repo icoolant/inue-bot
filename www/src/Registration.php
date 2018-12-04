@@ -29,12 +29,14 @@ class Registration
     public $step;
     /** @var float */
     public $paid_in_currency;
+    /** @var string */
+    public $updated_at;
 
     protected $errors = [];
 
     public function attributes(): array
     {
-        return ['peer_id', 'full_name', 'age', 'city', 'church', 'resettlement', 'paid', 'step', 'paid_in_currency'];
+        return ['peer_id', 'full_name', 'age', 'city', 'church', 'resettlement', 'paid', 'step', 'paid_in_currency', 'updated_at'];
     }
 
     public function validate(): bool

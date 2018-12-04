@@ -33,6 +33,7 @@ class Storage
     {
         $pdo = $this->pdo;
         if ($reg->validate()) {
+            $reg->updated_at = date('Y-m-d H:i:s');
             $params = implode(',', array_map(function ($attribute) use ($reg, $pdo) {
                 $attrVal = $reg->{$attribute};
                 if (is_null($attrVal)) {
